@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_DB: tixel
+      POSTGRES_USER: tixel
+      POSTGRES_PASSWORD: tixel
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  jupyter:
+    build:
+      context: ./analysis
+      dockerfile: Dockerfile
+    command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''
+    user: root
+    volumes:
+      - ./analysis:/home/jovyan/work/analysis
+      - ~/.aws:/home/jovyan/.aws:ro
+    ports:
+      - "9999:8888"
+    environment:
+      - DATABASE_URL=postgresql://tixel:tixel@db/tixel
+      - JUPYTER_ENABLE_LAB=yes
+      - GRANT_SUDO=yes
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=tixel
+      - DB_USER=tixel
+      - DB_PASS=tixel
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:

@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "tixel-analysis"
+version = "0.1.0"
+description = "Jupyter notebooks and analysis tools for Tixel data"
+authors = ["Morgan Crouch <mcrouch@atlassian.com>"]
+readme = "../README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+jupyter = "^1.0.0"
+pandas = "^2.1.4"
+matplotlib = "^3.8.2"
+seaborn = "^0.13.0"
+sqlalchemy = "^2.0.23"
+psycopg2-binary = "^2.9.9"
+ipykernel = "^6.28.0"
+boto3 = "^1.34.1"
+requests = "^2.31.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
