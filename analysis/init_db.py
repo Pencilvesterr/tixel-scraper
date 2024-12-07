@@ -1,15 +1,25 @@
-import boto3
 import json
 from datetime import datetime
 from database import Base, Event, Ticket, get_db_session
 from sqlalchemy import create_engine
 import os
 import pathlib
+import requests
+from urllib.parse import urljoin, urlparse
+from xml.etree import ElementTree
 
 def init_db():
     """Initialize the database tables"""
-    engine = create_engine("postgresql://tixel:tixel@db:5432/tixel")
-    
+    # Database connection settings
+    DB_HOST = os.getenv('DB_HOST', 'localhost')
+    DB_PORT = os.getenv('DB_PORT', '5432')
+    DB_NAME = os.getenv('DB_NAME', 'tixel')
+    DB_USER = os.getenv('DB_USER', 'tixel')
+    DB_PASS = os.getenv('DB_PASS', 'tixel')
+
+    # Create engine
+    engine = create_engine(f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}")
+
     # Drop all tables
     Base.metadata.drop_all(engine)
     
@@ -18,63 +28,81 @@ def init_db():
     
     return engine
 
-def load_json_from_s3(bucket_name='tixel-data'):
+def load_json_from_s3(bucket_url='https://tixel-data.s3.ap-southeast-2.amazonaws.com/events/'):
     """Load all JSON files from S3 bucket, caching them locally"""
-    s3 = boto3.client('s3')
-    
     # Create data directory if it doesn't exist
     data_dir = pathlib.Path(__file__).parent / 'data'
     data_dir.mkdir(exist_ok=True)
     
-    # List all objects in the bucket
-    paginator = s3.get_paginator('list_objects_v2')
-    pages = paginator.paginate(Bucket=bucket_name)
+    # Parse bucket URL to get bucket name and region
+    parsed_url = urlparse(bucket_url)
+    bucket_name = parsed_url.netloc.split('.')[0]
+    
+    # Get list of files using S3 REST API
+    list_url = f"https://{bucket_name}.s3.ap-southeast-2.amazonaws.com/?prefix=events/"
+    try:
+        response = requests.get(list_url)
+        response.raise_for_status()
+        # Parse XML response
+        root = ElementTree.fromstring(response.content)
+        # Find all Key elements (file paths)
+        namespace = {'s3': 'http://s3.amazonaws.com/doc/2006-03-01/'}
+        files = [key.text for key in root.findall('.//s3:Key', namespace) 
+                if key.text.endswith('.json') and key.text != 'events/index.json']
+    except requests.RequestException as e:
+        print(f"Error listing bucket contents: {e}")
+        return []
+    except ElementTree.ParseError as e:
+        print(f"Error parsing bucket listing: {e}")
+        return []
     
     all_events = []
-    for page in pages:
-        if 'Contents' not in page:
-            continue
-            
-        for obj in page['Contents']:
-            if not obj['Key'].endswith('.json'):
-                continue
-                
-            # Local cache path
-            local_path = data_dir / obj['Key']
-            local_path.parent.mkdir(parents=True, exist_ok=True)
-            
-            # Check if we have a cached version
-            json_data = None
-            if local_path.exists():
-                print(f"Loading {obj['Key']} from local cache...")
-                try:
-                    with open(local_path, 'r') as f:
-                        json_data = json.load(f)
-                except json.JSONDecodeError:
-                    print(f"Error reading cached file {local_path}, will download fresh copy")
-                    json_data = None
-            
-            # Download from S3 if not cached or cache is invalid
-            if json_data is None:
-                print(f"Downloading {obj['Key']} from S3...")
-                response = s3.get_object(Bucket=bucket_name, Key=obj['Key'])
-                json_data = json.loads(response['Body'].read().decode('utf-8'))
+    for file_path in files:
+        # Get relative path from events/ directory
+        relative_path = file_path.replace('events/', '', 1)
+        
+        # Local cache path
+        local_path = data_dir / relative_path
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Check if we have a cached version
+        json_data = None
+        if local_path.exists():
+            print(f"Loading {relative_path} from local cache...")
+            try:
+                with open(local_path, 'r') as f:
+                    json_data = json.load(f)
+            except json.JSONDecodeError:
+                print(f"Error reading cached file {local_path}, will download fresh copy")
+                json_data = None
+        
+        # Download from S3 if not cached or cache is invalid
+        if json_data is None:
+            print(f"Downloading {relative_path} from S3...")
+            file_url = urljoin(bucket_url, relative_path)
+            try:
+                response = requests.get(file_url)
+                response.raise_for_status()
+                json_data = response.json()
                 
                 # Cache the file locally
                 with open(local_path, 'w') as f:
                     json.dump(json_data, f, indent=2)
-            
-            # Handle different JSON structures
-            if isinstance(json_data, dict):
-                # If it's a dict, events might be nested under category keys
-                for category, events in json_data.items():
-                    if isinstance(events, list):
-                        for event in events:
-                            event['category'] = category  # Add category to event data
-                            all_events.append(event)
-            elif isinstance(json_data, list):
-                all_events.extend(json_data)
-            
+            except requests.RequestException as e:
+                print(f"Error downloading {relative_path}: {e}")
+                continue
+        
+        # Handle different JSON structures
+        if isinstance(json_data, dict):
+            # If it's a dict, events might be nested under category keys
+            for category, events in json_data.items():
+                if isinstance(events, list):
+                    for event in events:
+                        event['category'] = category  # Add category to event data
+                        all_events.append(event)
+        elif isinstance(json_data, list):
+            all_events.extend(json_data)
+    
     print(f"Loaded {len(all_events)} events")
     return all_events
 
@@ -220,5 +248,17 @@ def populate_database():
     finally:
         session.close()
 
+def test_s3_loading():
+    """Test function to verify S3 loading functionality"""
+    events = load_json_from_s3()
+    print(f"\nSuccessfully loaded {len(events)} events")
+    if events:
+        print("\nSample event data:")
+        print(json.dumps(events[0], indent=2))
+
 if __name__ == "__main__":
+    # Uncomment to run full database population
     populate_database()
+    
+    # Test S3 loading only
+    # test_s3_loading()
