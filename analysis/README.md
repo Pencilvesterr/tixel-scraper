@@ -2,15 +2,14 @@
 
 This directory contains Jupyter notebooks and analysis code for the Tixel event data.
 
-## Files
-- `analyze.py`: Analysis utilities and helper functions
+## Running Jupyter
+The Jupyter notebook server is configured in the root docker-compose.yml.
 
-## Dependencies
-Dependencies are managed with Poetry. To install:
+In the `tixel-scraper` directory, run:
 ```bash
-cd analysis
-poetry install
+docker compose up
 ```
 
-## Running Jupyter
-The Jupyter notebook server is configured in the root docker-compose.yml. Access it at http://localhost:9999 with no authentication required.
+Then access it at http://localhost:9999 with no authentication required.
+
+

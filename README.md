@@ -1,68 +1,67 @@
 # Tixel Scraper
 
-A project for scraping and analyzing Tixel event data.
+A project for scraping and analyzing Tixel event data. The system collects event and ticket data from Tixel, stores it in S3, and provides tools for analysis using PostgreSQL and Jupyter notebooks.
 
 ## Project Structure
 - `/lambda`: AWS Lambda function for scraping Tixel data
-- `/analysis`: Jupyter notebooks and analysis tools
+- `/analysis`: Jupyter notebooks and analysis tools for processing event data
 
-## Dependencies
-The project is split into two separate Poetry environments:
-1. Lambda function dependencies in `/lambda/pyproject.toml`
-2. Analysis dependencies in `/analysis/pyproject.toml`
+## Setup
 
-## Jupyter Notebooks
-This repo uses the [jupyter-scipy-notebook image](https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html#jupyter-scipy-notebook). The documentation shows all packages that are pre-installed.
+### Prerequisites
+1. Docker and Docker Compose
+2. Python 3.12
+3. Poetry (Python dependency management)
+4. AWS CLI (configured with appropriate credentials)
 
-# Running the repo
-To run the script locally:
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/tixel-scraper.git
+cd tixel-scraper
 ```
+2. Optional (for local development) - Install the dependencies for analysis tools:
+```bash
+cd analysis
+poetry install
+```
+
+### Running the Analysis Environment
+
+1. Start the PostgreSQL database and Jupyter notebook server:
+```bash
+# From the root directory
+docker compose up -d
+```
+
+2. Access Jupyter at http://localhost:9999 (no authentication required)
+
+### Data Collection
+To run the scraper locally (only works on my machine due to AWS credentials):
+```bash
+cd lambda
 poetry run python main.py
 ```
 
-To check all saved JSONs:
-```
+To check collected data in S3:
+```bash
 aws s3 ls s3://tixel-data/events/ --recursive --human-readable
 ```
 
-To download a single file:
+To download a specific event file:
+```bash
+aws s3 cp s3://tixel-data/events/[DATE]/all-tickets.json .
 ```
-aws s3 cp s3://tixel-data/events/20230606/FOOD_AND_DRINK-tickets.json .
-```
 
-# General Notes 
-"""
-The main api we start from is the following. We can filter by category above with -tickets suffix
-https://tixel.com/nuxt-api/kv/db-directory-pages/ALL?page=1&filter=music-tickets&country=AUS&limit=1000
+## API Notes
+// TODO: Try and use the more detailed API. 
+Main API endpoints:
+- Event listing: `https://tixel.com/nuxt-api/kv/db-directory-pages/ALL`
+  * Parameters:
+    - page: Page number
+    - filter: Category filter (e.g., 'music-tickets')
+    - country: Country code (e.g., 'AUS')
+    - limit: Results per page
 
-TODO: I want events in a given timeframe. Need to see how to filter, because I can see this on their site e.g. 
-https://tixel.com/au/discover/Sydney/music-tickets?page=1
-
-There will either be an event page, or there'll be a list of events
-If there's an event page, we'll scrape the event page
-If there's a list of events, we'll scrape the list of events
-
-https://tixel.com/au/music-tickets/noel-gallagher
-This will return an HTML page
-In this response, there's a growthbook link
-  growthbook: {
-                        apiHost: "https://cdn.growthbook.io",
-                        clientKey: "sdk-TFN2oDOEu2ORjAL2"
-                    },
-We can then call this at https://cdn.growthbook.io/api/features/sdk-TFN2oDOEu2ORjAL2
-"""
-
-# https://tixel.com/au/discover/music-tickets
-# https://tixel.com/au/discover/festival-tickets
-# https://tixel.com/au/discover/sports-tickets
-# https://tixel.com/au/discover/theatre-tickets
-# https://tixel.com/au/discover/comedy-tickets
-# https://tixel.com/au/discover/food-and-drink-tickets
-
-
-""" 
-Trying to get all music events this month in Sydney
-https://tixel.com/nuxt-api/events-by-city/au/Sydney?category=music-tickets&dates=%7B%22named%22:%22this-month%22%7D&genres=&limit=100&availableOnly=false&page=1&sortBy=date&sortOrder=asc
-
-After decoding the URL, we get: https://tixel.com/nuxt-api/events-by-city/au/Sydney?category=music-tickets&dates={"named":"this-month"}&genres=&limit=20&availableOnly=false&page=1&sortBy=date&sortOrder=asc
-"""
+For more details on the analysis tools and notebooks, see `/analysis/README.md`.
