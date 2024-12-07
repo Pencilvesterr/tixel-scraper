@@ -1,18 +1,4 @@
-# Tixel Scraper
 
-A project for scraping and analyzing Tixel event data.
-
-## Project Structure
-- `/lambda`: AWS Lambda function for scraping Tixel data
-- `/analysis`: Jupyter notebooks and analysis tools
-
-## Dependencies
-The project is split into two separate Poetry environments:
-1. Lambda function dependencies in `/lambda/pyproject.toml`
-2. Analysis dependencies in `/analysis/pyproject.toml`
-
-## Jupyter Notebooks
-This repo uses the [jupyter-scipy-notebook image](https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html#jupyter-scipy-notebook). The documentation shows all packages that are pre-installed.
 
 # Running the repo
 To run the script locally:
