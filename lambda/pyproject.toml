@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "tixel-scraper-lambda"
+version = "0.1.0"
+description = "Lambda function for scraping Tixel event data"
+authors = ["Morgan Crouch <mcrouch@atlassian.com>"]
+readme = "../README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+boto3 = "^1.35.63"
+requests = "^2.32.3"
+pydantic = "^2.9.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
