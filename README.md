@@ -39,6 +39,8 @@ docker compose up -d
 
 For more details on the analysis tools and notebooks, see `/analysis/README.md`.
 
+Checkout `/resources/example.json` for a sample of the api response. 
+
 ## (Optional) API Scrapping
 To run the scraper locally (only works on my machine due to AWS credentials):
 ```bash
