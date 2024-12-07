@@ -6,6 +6,11 @@ import seaborn as sns
 from datetime import datetime, timedelta
 import os
 
+"""
+This script performs basic analysis on the events and tickets data in the database.
+It's designed to be used to test the data locally. Please use the jupyter notebook for real analysis.
+"""
+
 # Database connection settings
 DB_HOST = os.getenv('DB_HOST', 'localhost')
 DB_PORT = os.getenv('DB_PORT', '5432')
