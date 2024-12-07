@@ -12,4 +12,5 @@ docker compose up
 
 Then access it at http://localhost:9999 with no authentication required.
 
+This should have all dependencies to use Jupyter notebook for any data analysis. 
 

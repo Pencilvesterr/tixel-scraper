@@ -9,10 +9,10 @@ A project for scraping and analyzing Tixel event data. The system collects event
 ## Setup
 
 ### Prerequisites
-1. Docker and Docker Compose
+1. [Docker and Docker Compose](https://docs.docker.com/get-docker/)
 2. Python 3.12
-3. Poetry (Python dependency management)
-4. AWS CLI (configured with appropriate credentials)
+3. [Poetry](https://python-poetry.org/docs/)
+4. [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) (Only if running the scraper locally)
 
 ### Installation
 
@@ -21,13 +21,13 @@ A project for scraping and analyzing Tixel event data. The system collects event
 git clone https://github.com/yourusername/tixel-scraper.git
 cd tixel-scraper
 ```
-2. Optional (for local development) - Install the dependencies for analysis tools:
+2. Optional (for locally running the scrapper):
 ```bash
-cd analysis
+cd lambda
 poetry install
 ```
 
-### Running the Analysis Environment
+## Running the Data Analysis Environment
 
 1. Start the PostgreSQL database and Jupyter notebook server:
 ```bash
@@ -37,7 +37,9 @@ docker compose up -d
 
 2. Access Jupyter at http://localhost:9999 (no authentication required)
 
-### Data Collection
+For more details on the analysis tools and notebooks, see `/analysis/README.md`.
+
+## (Optional) API Scrapping
 To run the scraper locally (only works on my machine due to AWS credentials):
 ```bash
 cd lambda
@@ -54,14 +56,4 @@ To download a specific event file:
 aws s3 cp s3://tixel-data/events/[DATE]/all-tickets.json .
 ```
 
-## API Notes
-// TODO: Try and use the more detailed API. 
-Main API endpoints:
-- Event listing: `https://tixel.com/nuxt-api/kv/db-directory-pages/ALL`
-  * Parameters:
-    - page: Page number
-    - filter: Category filter (e.g., 'music-tickets')
-    - country: Country code (e.g., 'AUS')
-    - limit: Results per page
 
-For more details on the analysis tools and notebooks, see `/analysis/README.md`.
